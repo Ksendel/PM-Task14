@@ -1,24 +1,31 @@
 import React, {useEffect} from 'react'
-import {useParams} from "react-router-dom";
+import {Link, useParams} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
-import selector from "../Preview-page/Preview.selector";
+import selector from "../../selector";
 import useLoadPhotos from "../../hooks/useLoadPhotos";
 import API from "../../services/API";
 import Async from "react-async";
 import LoadMoreButton from "../LoadMore/LoadMoreButton";
+import Spinner from "react-bootstrap/Spinner";
 
 const AlbumPage = () => {
 
     const {albumId} = useParams()
-    const {photos, offset} = useSelector(selector)
 
-    // const dispatch = useDispatch()
-    // useEffect(() => {
-    //     console.log("Clear")
-    //     dispatch(clearState())
-    // }, [albumId])
+    const {isLoading, photos, loadMore} = useLoadPhotos(albumId)
 
-    useLoadPhotos({offset, albumId})
+    const Loading = () => (
+        <Spinner animation="border" role="status">
+            <span className="sr-only">Loading...</span>
+        </Spinner>
+    )
+
+    const Photos = () => <div>
+        {photos.map(photo => <img src={photo.thumbnailUrl} alt={photo.title}/>)}
+        <div>
+            <LoadMoreButton onLoadMore={loadMore}/>
+        </div>
+    </div>
 
     return (
         <Async promiseFn={API.getAlbum} id={albumId}>
@@ -28,10 +35,7 @@ const AlbumPage = () => {
                 <div>
                     <p>{album.title}</p>
                     <p>{album.user.name} - {album.user.email}</p>
-                    <div>
-                        {photos.map(photo => <img src={photo.thumbnailUrl} alt=""/>)}
-                    </div>
-                    <LoadMoreButton/>
+                    {isLoading ? <Loading/> : <Photos/>}
                 </div>
             }</Async.Fulfilled>
         </Async>
